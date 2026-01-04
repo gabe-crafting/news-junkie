@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthProvider'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { AppLayout } from './components/AppLayout'
 import { MainPage } from './pages/MainPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -16,34 +17,26 @@ function App() {
           <Route path="/" element={<MainPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          {/* Redirect /app to /app/home */}
-          <Route path="/app" element={<Navigate to="/app/home" replace />} />
+
+          {/* Protected app routes with layout */}
           <Route
-            path="/app/home"
+            path="/app/*"
             element={
               <ProtectedRoute>
-                <HomePage />
+                <AppLayout>
+                  <Routes>
+                    {/* Redirect /app to /app/home */}
+                    <Route path="/" element={<Navigate to="/app/home" replace />} />
+                    <Route path="/home" element={<HomePage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/following" element={<FollowingPage />} />
+                    {/* Redirect old followers route to following */}
+                    <Route path="/followers" element={<Navigate to="/app/following" replace />} />
+                  </Routes>
+                </AppLayout>
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/app/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/app/following"
-            element={
-              <ProtectedRoute>
-                <FollowingPage />
-              </ProtectedRoute>
-            }
-          />
-          {/* Redirect old followers route to following */}
-          <Route path="/app/followers" element={<Navigate to="/app/following" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
