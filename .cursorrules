@@ -1,0 +1,15 @@
+# Cursor Configuration
+
+## Platform
+- Operating System: Windows
+- Use Windows-compatible commands (PowerShell/cmd) instead of Linux/Unix commands
+- Prefer using Bun when possible (package management, running scripts, etc.)
+
+## React Best Practices
+- Prefer solutions using actions (form actions, event handlers) and modern hooks (use, useQuery, etc.) for API fetching and synchronization instead of useEffect when possible
+- Avoid useEffect for data fetching or side effects that can be handled with actions or dedicated hooks
+- This is a SPA (Single Page Application), no server-side rendering
+
+## TypeScript Rules
+- Never use `any` type - use proper types, `unknown`, or `never` instead
+
