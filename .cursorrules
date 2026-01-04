@@ -13,3 +13,8 @@
 ## TypeScript Rules
 - Never use `any` type - use proper types, `unknown`, or `never` instead
 
+## UI Components
+- Always prefer shadcn/ui components when available (Button, Input, etc.) over native HTML elements or custom components
+- Use shadcn components from `@/components/ui` for consistent styling and behavior
+- When a shadcn component exists for a use case, use it instead of creating custom components
+
