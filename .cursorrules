@@ -18,3 +18,6 @@
 - Use shadcn components from `@/components/ui` for consistent styling and behavior
 - When a shadcn component exists for a use case, use it instead of creating custom components
 
+## Testing
+- Always run `bun run build` to test the app and verify there are no build errors before considering changes complete
+
