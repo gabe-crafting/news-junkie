@@ -7,7 +7,9 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { HomePage } from './pages/HomePage'
 import { ProfilePage } from './pages/ProfilePage'
+import { ProfileRedirectPage } from './pages/ProfileRedirectPage'
 import { FollowingPage } from './pages/FollowingPage'
+import { DiscoverPage } from './pages/DiscoverPage'
 
 function App() {
   return (
@@ -28,8 +30,10 @@ function App() {
                     {/* Redirect /app to /app/home */}
                     <Route path="/" element={<Navigate to="/app/home" replace />} />
                     <Route path="/home" element={<HomePage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/profile" element={<ProfileRedirectPage />} />
+                    <Route path="/profile/:userId" element={<ProfilePage />} />
                     <Route path="/following" element={<FollowingPage />} />
+                    <Route path="/discover" element={<DiscoverPage />} />
                     {/* Redirect old followers route to following */}
                     <Route path="/followers" element={<Navigate to="/app/following" replace />} />
                   </Routes>
