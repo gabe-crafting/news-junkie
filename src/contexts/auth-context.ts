@@ -9,6 +9,10 @@ export interface AuthContextType {
   session: Session
   loading: boolean
   signOut: () => Promise<void>
+  profileRefreshKey: number
+  bumpProfileRefreshKey: () => void
+  postsRefreshKey: number
+  bumpPostsRefreshKey: () => void
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)

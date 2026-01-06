@@ -33,7 +33,10 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
   return data
 }
 
-export function useProfile(userId: string | null | undefined): UseProfileResult {
+export function useProfile(
+  userId: string | null | undefined,
+  refreshKey?: number
+): UseProfileResult {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -67,7 +70,7 @@ export function useProfile(userId: string | null | undefined): UseProfileResult 
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, refreshKey])
 
   return { profile, loading, error }
 }

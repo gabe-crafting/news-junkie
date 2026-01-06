@@ -7,8 +7,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 
 export function AppNavigation() {
-  const { user, signOut } = useAuth()
-  const { profile } = useProfile(user?.id)
+  const { user, signOut, profileRefreshKey } = useAuth()
+  const { profile } = useProfile(user?.id, profileRefreshKey)
 
   const handleSignOut = async () => {
     await signOut()

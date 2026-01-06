@@ -10,6 +10,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session>(null)
   const [loading, setLoading] = useState(true)
+  const [profileRefreshKey, setProfileRefreshKey] = useState(0)
+  const [postsRefreshKey, setPostsRefreshKey] = useState(0)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -37,8 +39,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigate('/')
   }
 
+  const bumpProfileRefreshKey = () => setProfileRefreshKey((k) => k + 1)
+  const bumpPostsRefreshKey = () => setPostsRefreshKey((k) => k + 1)
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        signOut,
+        profileRefreshKey,
+        bumpProfileRefreshKey,
+        postsRefreshKey,
+        bumpPostsRefreshKey,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

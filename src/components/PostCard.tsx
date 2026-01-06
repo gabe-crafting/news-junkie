@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Copy, ExternalLink, Pencil } from 'lucide-react'
+import { Copy, ExternalLink, Pencil, Trash2 } from 'lucide-react'
 import type { Post } from '@/hooks/usePosts'
 import { useAuth } from '@/hooks/useAuth'
+import { PostEditDialog } from '@/components/PostEditDialog'
+import { PostDeleteDialog } from '@/components/PostDeleteDialog'
 
 type PostCardProps = {
   post: Post
@@ -22,6 +25,8 @@ export function PostCard({ post }: PostCardProps) {
   const fallback = authorName.trim().slice(0, 1).toUpperCase() || '?'
   const createdAtLabel = formatCreatedAt(post.created_at)
   const isOwnPost = user?.id === post.user_id
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
 
   const handleCopyNewsLink = async () => {
     try {
@@ -30,6 +35,11 @@ export function PostCard({ post }: PostCardProps) {
     } catch {
       // no-op: clipboard permissions can fail depending on browser context
     }
+  }
+
+  const openEdit = () => {
+    if (!isOwnPost) return
+    setEditOpen(true)
   }
 
   return (
@@ -78,17 +88,33 @@ export function PostCard({ post }: PostCardProps) {
         </Button>
 
         {isOwnPost ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="size-6"
-            disabled
-            aria-label="Edit post (coming soon)"
-            title="Edit (coming soon)"
-          >
-            <Pencil className="size-3" />
-          </Button>
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="size-6"
+              onClick={openEdit}
+              aria-label="Edit post"
+              title="Edit post"
+            >
+              <Pencil className="size-3" />
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="size-6"
+              onClick={() => {
+                setDeleteOpen(true)
+              }}
+              aria-label="Delete post"
+              title="Delete post"
+            >
+              <Trash2 className="size-3" />
+            </Button>
+          </>
         ) : null}
 
         <Button
@@ -104,6 +130,9 @@ export function PostCard({ post }: PostCardProps) {
           </a>
         </Button>
       </CardFooter>
+
+      {isOwnPost ? <PostEditDialog post={post} open={editOpen} onOpenChange={setEditOpen} /> : null}
+      {isOwnPost ? <PostDeleteDialog post={post} open={deleteOpen} onOpenChange={setDeleteOpen} /> : null}
     </Card>
   )
 }

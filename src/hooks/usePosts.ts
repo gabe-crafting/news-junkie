@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export type PostAuthor = {
@@ -42,27 +42,54 @@ function normalizeAuthor(author: PostsSelectRow['user_profiles']): PostAuthor | 
   return author
 }
 
-async function fetchPosts(limit: number): Promise<Post[]> {
-  const { data, error } = await supabase
+type FetchPostsArgs = {
+  limit: number
+  userId: string | null
+  searchText: string
+  searchTags: string[]
+}
+
+async function fetchPostsFiltered({
+  limit,
+  userId,
+  searchText,
+  searchTags,
+}: FetchPostsArgs): Promise<Post[]> {
+  let query = supabase
     .from('posts')
     .select(
       `
-      id,
-      user_id,
-      description,
-      news_link,
-      archive_link,
-      tags,
-      created_at,
-      user_profiles (
         id,
-        name,
-        profile_picture_url
-      )
-    `
+        user_id,
+        description,
+        news_link,
+        archive_link,
+        tags,
+        created_at,
+        user_profiles (
+          id,
+          name,
+          profile_picture_url
+        )
+      `
     )
     .order('created_at', { ascending: false })
     .limit(limit)
+
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
+
+  if (searchText) {
+    const q = `%${searchText}%`
+    query = query.or(`description.ilike.${q},news_link.ilike.${q}`)
+  }
+
+  if (searchTags.length > 0) {
+    query = query.overlaps('tags', searchTags)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
 
@@ -79,8 +106,22 @@ async function fetchPosts(limit: number): Promise<Post[]> {
   }))
 }
 
-export function usePosts(options?: { limit?: number }): UsePostsResult {
+export function usePosts(options?: {
+  limit?: number
+  userId?: string | null
+  refreshKey?: number
+  searchText?: string
+  searchTags?: string[]
+}): UsePostsResult {
   const limit = options?.limit ?? 50
+  const userId = options?.userId ?? null
+  const refreshKey = options?.refreshKey
+  const searchText = options?.searchText?.trim() ?? ''
+  const searchTags = useMemo(
+    () => (options?.searchTags ?? []).map((t) => t.trim().toLowerCase()).filter(Boolean),
+    [options?.searchTags]
+  )
+  const searchTagsKey = useMemo(() => searchTags.join('|'), [searchTags])
 
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -89,7 +130,7 @@ export function usePosts(options?: { limit?: number }): UsePostsResult {
   const run = async () => {
     setLoading(true)
     setError(null)
-    const p = await fetchPosts(limit)
+    const p = await fetchPostsFiltered({ limit, userId, searchText, searchTags })
     setPosts(p)
     setLoading(false)
   }
@@ -99,7 +140,7 @@ export function usePosts(options?: { limit?: number }): UsePostsResult {
 
     async function safeRun() {
       try {
-        const p = await fetchPosts(limit)
+        const p = await fetchPostsFiltered({ limit, userId, searchText, searchTags })
         if (cancelled) return
         setPosts(p)
       } catch (e: unknown) {
@@ -117,7 +158,7 @@ export function usePosts(options?: { limit?: number }): UsePostsResult {
     return () => {
       cancelled = true
     }
-  }, [limit])
+  }, [limit, userId, refreshKey, searchText, searchTags, searchTagsKey])
 
   const refetch = async () => {
     try {
