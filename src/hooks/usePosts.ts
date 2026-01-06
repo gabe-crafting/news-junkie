@@ -45,6 +45,7 @@ function normalizeAuthor(author: PostsSelectRow['user_profiles']): PostAuthor | 
 type FetchPostsArgs = {
   limit: number
   userId: string | null
+  userIds: string[] | null
   searchText: string
   searchTags: string[]
   tagMode: 'union' | 'intersection'
@@ -53,10 +54,13 @@ type FetchPostsArgs = {
 async function fetchPostsFiltered({
   limit,
   userId,
+  userIds,
   searchText,
   searchTags,
   tagMode,
 }: FetchPostsArgs): Promise<Post[]> {
+  if (!userId && userIds && userIds.length === 0) return []
+
   let query = supabase
     .from('posts')
     .select(
@@ -80,6 +84,8 @@ async function fetchPostsFiltered({
 
   if (userId) {
     query = query.eq('user_id', userId)
+  } else if (userIds && userIds.length > 0) {
+    query = query.in('user_id', userIds)
   }
 
   if (searchText) {
@@ -113,6 +119,7 @@ async function fetchPostsFiltered({
 export function usePosts(options?: {
   limit?: number
   userId?: string | null
+  userIds?: string[] | null
   refreshKey?: number
   searchText?: string
   searchTags?: string[]
@@ -120,6 +127,11 @@ export function usePosts(options?: {
 }): UsePostsResult {
   const limit = options?.limit ?? 50
   const userId = options?.userId ?? null
+  const userIds = useMemo(() => {
+    const ids = options?.userIds ?? null
+    if (!ids) return null
+    return Array.from(new Set(ids.filter(Boolean)))
+  }, [options?.userIds])
   const refreshKey = options?.refreshKey
   const searchText = options?.searchText?.trim() ?? ''
   const searchTags = useMemo(
@@ -136,7 +148,7 @@ export function usePosts(options?: {
   const run = async () => {
     setLoading(true)
     setError(null)
-    const p = await fetchPostsFiltered({ limit, userId, searchText, searchTags, tagMode })
+    const p = await fetchPostsFiltered({ limit, userId, userIds, searchText, searchTags, tagMode })
     setPosts(p)
     setLoading(false)
   }
@@ -146,7 +158,7 @@ export function usePosts(options?: {
 
     async function safeRun() {
       try {
-        const p = await fetchPostsFiltered({ limit, userId, searchText, searchTags, tagMode })
+        const p = await fetchPostsFiltered({ limit, userId, userIds, searchText, searchTags, tagMode })
         if (cancelled) return
         setPosts(p)
       } catch (e: unknown) {
@@ -164,7 +176,7 @@ export function usePosts(options?: {
     return () => {
       cancelled = true
     }
-  }, [limit, userId, refreshKey, searchText, searchTags, searchTagsKey, tagMode])
+  }, [limit, userId, userIds, refreshKey, searchText, searchTags, searchTagsKey, tagMode])
 
   const refetch = async () => {
     try {

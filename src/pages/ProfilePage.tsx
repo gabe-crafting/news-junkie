@@ -10,6 +10,7 @@ import { Camera, Copy, Pencil } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
 import { Textarea } from '@/components/ui/textarea'
+import { PostSearchCollapsible, type TagMode } from '@/components/PostSearchCollapsible'
 import {
   Dialog,
   DialogContent,
@@ -43,11 +44,24 @@ export function ProfilePage() {
   const { user, loading: authLoading, profileRefreshKey, bumpProfileRefreshKey, postsRefreshKey } = useAuth()
   const { profile, loading, error } = useProfile(userId, profileRefreshKey)
   const { isFollowing, loading: followLoading, toggle: toggleFollow } = useFollow(user?.id, userId)
+  const [postSearch, setPostSearch] = useState<{ text: string; tags: string[]; tagMode: TagMode }>({
+    text: '',
+    tags: [],
+    tagMode: 'union',
+  })
+
   const {
     posts: userPosts,
     loading: postsLoading,
     error: postsError,
-  } = usePosts({ limit: 50, userId, refreshKey: postsRefreshKey })
+  } = usePosts({
+    limit: 50,
+    userId,
+    refreshKey: postsRefreshKey,
+    searchText: postSearch.text,
+    searchTags: postSearch.tags,
+    tagMode: postSearch.tagMode,
+  })
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -297,6 +311,24 @@ export function ProfilePage() {
       </div>
 
       <div className="pt-2">
+        <PostSearchCollapsible
+          title="Search posts"
+          value={postSearch}
+          onSearch={async (next) => {
+            setPostSearch(next)
+            // Track tags as "usually viewed"
+            if (user && next.tags.length > 0) {
+              await Promise.all(
+                next.tags.map((tag) =>
+                  supabase.rpc('add_usually_viewed_tag', { p_user_id: user.id, p_tag: tag })
+                )
+              )
+              bumpProfileRefreshKey()
+            }
+          }}
+          onClear={() => setPostSearch({ text: '', tags: [], tagMode: 'union' })}
+        />
+
         {postsLoading ? (
           <div className="text-muted-foreground">Loading posts...</div>
         ) : postsError ? (
