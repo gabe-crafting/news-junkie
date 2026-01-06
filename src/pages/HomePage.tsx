@@ -10,12 +10,15 @@ import { Input } from '@/components/ui/input'
 import { isValidTag } from '@/hooks/usePostMutations'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { Switch } from '@/components/ui/switch'
 
 export function HomePage() {
   const { user, postsRefreshKey, bumpProfileRefreshKey } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const appliedText = searchParams.get('q') ?? ''
+  const appliedTagMode =
+    searchParams.get('tagMode') === 'intersection' ? 'intersection' : 'union'
   const appliedTags = useMemo(() => {
     const raw = searchParams.get('tags') ?? ''
     return raw
@@ -29,6 +32,7 @@ export function HomePage() {
     refreshKey: postsRefreshKey,
     searchText: appliedText,
     searchTags: appliedTags,
+    tagMode: appliedTagMode,
   })
   const [searchOpen, setSearchOpen] = useState(false)
 
@@ -37,6 +41,7 @@ export function HomePage() {
   const [draftTagInput, setDraftTagInput] = useState('')
   const [draftTags, setDraftTags] = useState<string[]>([])
   const [draftError, setDraftError] = useState<string | null>(null)
+  const [draftTagMode, setDraftTagMode] = useState<'union' | 'intersection'>('union')
 
   const addDraftTag = (raw: string) => {
     const next = raw.trim().toLowerCase()
@@ -64,6 +69,7 @@ export function HomePage() {
   const applySearch = async () => {
     const nextText = draftText.trim()
     const nextTags = draftTags
+    const nextTagMode = draftTagMode
 
     const params = new URLSearchParams(searchParams)
     if (nextText) params.set('q', nextText)
@@ -71,6 +77,9 @@ export function HomePage() {
 
     if (nextTags.length > 0) params.set('tags', nextTags.join(','))
     else params.delete('tags')
+
+    if (nextTags.length > 0 && nextTagMode === 'intersection') params.set('tagMode', 'intersection')
+    else params.delete('tagMode')
 
     setSearchParams(params)
     setSearchOpen(false)
@@ -91,9 +100,11 @@ export function HomePage() {
     setDraftTagInput('')
     setDraftTags([])
     setDraftError(null)
+    setDraftTagMode('union')
     const params = new URLSearchParams(searchParams)
     params.delete('q')
     params.delete('tags')
+    params.delete('tagMode')
     setSearchParams(params)
   }
 
@@ -108,6 +119,7 @@ export function HomePage() {
             setDraftText(appliedText)
             setDraftTags(appliedTags)
             setDraftTagInput('')
+            setDraftTagMode(appliedTagMode)
           }
         }}
       >
@@ -174,13 +186,25 @@ export function HomePage() {
 
             {draftError ? <div className="text-sm text-destructive">{draftError}</div> : null}
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Intersection</span>
+                <Switch
+                  checked={draftTagMode === 'union'}
+                  onCheckedChange={(checked) => setDraftTagMode(checked ? 'union' : 'intersection')}
+                  aria-label="Toggle tag match mode"
+                />
+                <span className="text-xs text-muted-foreground">Union</span>
+              </div>
+
+              <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={clearSearch}>
                 Clear
               </Button>
               <Button type="button" onClick={() => void applySearch()}>
                 Search
               </Button>
+              </div>
             </div>
           </div>
         </CollapsibleContent>

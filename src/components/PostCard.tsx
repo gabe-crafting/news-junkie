@@ -8,6 +8,7 @@ import type { Post } from '@/hooks/usePosts'
 import { useAuth } from '@/hooks/useAuth'
 import { PostEditDialog } from '@/components/PostEditDialog'
 import { PostDeleteDialog } from '@/components/PostDeleteDialog'
+import { PostOpenLinkDialog } from '@/components/PostOpenLinkDialog'
 
 type PostCardProps = {
   post: Post
@@ -27,11 +28,13 @@ export function PostCard({ post }: PostCardProps) {
   const isOwnPost = user?.id === post.user_id
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [openLinkOpen, setOpenLinkOpen] = useState(false)
 
   const handleCopyNewsLink = async () => {
     try {
       if (!('clipboard' in navigator)) return
-      await navigator.clipboard.writeText(post.news_link)
+      const text = `${post.description} - ${post.news_link}`
+      await navigator.clipboard.writeText(text)
     } catch {
       // no-op: clipboard permissions can fail depending on browser context
     }
@@ -118,21 +121,21 @@ export function PostCard({ post }: PostCardProps) {
         ) : null}
 
         <Button
-          asChild
+          type="button"
           variant="ghost"
           size="icon-sm"
           className="size-6"
           aria-label="Open news link"
           title="Open news link"
+          onClick={() => setOpenLinkOpen(true)}
         >
-          <a href={post.news_link} target="_blank" rel="noreferrer">
-            <ExternalLink className="size-3" />
-          </a>
+          <ExternalLink className="size-3" />
         </Button>
       </CardFooter>
 
       {isOwnPost ? <PostEditDialog post={post} open={editOpen} onOpenChange={setEditOpen} /> : null}
       {isOwnPost ? <PostDeleteDialog post={post} open={deleteOpen} onOpenChange={setDeleteOpen} /> : null}
+      <PostOpenLinkDialog post={post} open={openLinkOpen} onOpenChange={setOpenLinkOpen} />
     </Card>
   )
 }

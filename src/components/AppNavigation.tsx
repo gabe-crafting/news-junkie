@@ -69,7 +69,7 @@ export function AppNavigation() {
       <div className="mt-auto">
         <Card className="border-0 shadow-none">
           <CardContent className="p-3">
-            <div className="flex items-center gap-3 min-w-0">
+            <Link to={profileHref} className="flex items-center gap-3 min-w-0 hover:opacity-90 transition-opacity">
               <Avatar className="size-10">
                 {profile?.profile_picture_url ? (
                   <AvatarImage src={profile.profile_picture_url} alt={displayName} />
@@ -80,7 +80,7 @@ export function AppNavigation() {
                 <div className="font-semibold truncate">{displayName}</div>
                 <div className="text-sm text-muted-foreground truncate">{user?.email ?? ''}</div>
               </div>
-            </div>
+            </Link>
           </CardContent>
         </Card>
       </div>

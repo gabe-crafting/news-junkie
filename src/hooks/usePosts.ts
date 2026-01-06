@@ -47,6 +47,7 @@ type FetchPostsArgs = {
   userId: string | null
   searchText: string
   searchTags: string[]
+  tagMode: 'union' | 'intersection'
 }
 
 async function fetchPostsFiltered({
@@ -54,6 +55,7 @@ async function fetchPostsFiltered({
   userId,
   searchText,
   searchTags,
+  tagMode,
 }: FetchPostsArgs): Promise<Post[]> {
   let query = supabase
     .from('posts')
@@ -86,7 +88,9 @@ async function fetchPostsFiltered({
   }
 
   if (searchTags.length > 0) {
-    query = query.overlaps('tags', searchTags)
+    query = tagMode === 'intersection'
+      ? query.contains('tags', searchTags)
+      : query.overlaps('tags', searchTags)
   }
 
   const { data, error } = await query
@@ -112,6 +116,7 @@ export function usePosts(options?: {
   refreshKey?: number
   searchText?: string
   searchTags?: string[]
+  tagMode?: 'union' | 'intersection'
 }): UsePostsResult {
   const limit = options?.limit ?? 50
   const userId = options?.userId ?? null
@@ -122,6 +127,7 @@ export function usePosts(options?: {
     [options?.searchTags]
   )
   const searchTagsKey = useMemo(() => searchTags.join('|'), [searchTags])
+  const tagMode = options?.tagMode ?? 'union'
 
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -130,7 +136,7 @@ export function usePosts(options?: {
   const run = async () => {
     setLoading(true)
     setError(null)
-    const p = await fetchPostsFiltered({ limit, userId, searchText, searchTags })
+    const p = await fetchPostsFiltered({ limit, userId, searchText, searchTags, tagMode })
     setPosts(p)
     setLoading(false)
   }
@@ -140,7 +146,7 @@ export function usePosts(options?: {
 
     async function safeRun() {
       try {
-        const p = await fetchPostsFiltered({ limit, userId, searchText, searchTags })
+        const p = await fetchPostsFiltered({ limit, userId, searchText, searchTags, tagMode })
         if (cancelled) return
         setPosts(p)
       } catch (e: unknown) {
@@ -158,7 +164,7 @@ export function usePosts(options?: {
     return () => {
       cancelled = true
     }
-  }, [limit, userId, refreshKey, searchText, searchTags, searchTagsKey])
+  }, [limit, userId, refreshKey, searchText, searchTags, searchTagsKey, tagMode])
 
   const refetch = async () => {
     try {
