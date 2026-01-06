@@ -23,6 +23,7 @@ export function FollowingPage() {
     searchText: postSearch.text,
     searchTags: postSearch.tags,
     tagMode: postSearch.tagMode,
+    viewerUserId: user?.id ?? null,
   })
 
   return (

@@ -33,6 +33,7 @@ export function HomePage() {
     searchText: appliedText,
     searchTags: appliedTags,
     tagMode: appliedTagMode,
+    viewerUserId: user?.id ?? null,
   })
   const [searchOpen, setSearchOpen] = useState(false)
 

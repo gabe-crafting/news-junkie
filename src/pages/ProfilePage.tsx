@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
@@ -61,6 +61,21 @@ export function ProfilePage() {
     searchText: postSearch.text,
     searchTags: postSearch.tags,
     tagMode: postSearch.tagMode,
+    viewerUserId: user?.id ?? null,
+  })
+
+  const {
+    posts: sharedPosts,
+    loading: sharedLoading,
+    error: sharedError,
+  } = usePosts({
+    limit: 50,
+    sharedByUserId: userId ?? null,
+    refreshKey: postsRefreshKey,
+    searchText: postSearch.text,
+    searchTags: postSearch.tags,
+    tagMode: postSearch.tagMode,
+    viewerUserId: user?.id ?? null,
   })
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -79,6 +94,15 @@ export function ProfilePage() {
   const isOwnProfile = !!userId && !!user && user.id === userId
   const description = profile?.description ?? ''
   const canFollow = !!user?.id && !!userId && user.id !== userId
+
+  const combinedPosts = useMemo(() => {
+    const map = new Map<string, (typeof userPosts)[number]>()
+    for (const p of userPosts) map.set(p.id, p)
+    for (const p of sharedPosts) map.set(p.id, p)
+    const all = Array.from(map.values())
+    all.sort((a, b) => b.created_at.localeCompare(a.created_at))
+    return all
+  }, [sharedPosts, userPosts])
 
   const handleCopyId = async () => {
     if (!userId) return
@@ -329,15 +353,17 @@ export function ProfilePage() {
           onClear={() => setPostSearch({ text: '', tags: [], tagMode: 'union' })}
         />
 
-        {postsLoading ? (
+        {postsLoading || sharedLoading ? (
           <div className="text-muted-foreground">Loading posts...</div>
         ) : postsError ? (
           <div className="text-destructive">{postsError}</div>
-        ) : userPosts.length === 0 ? (
+        ) : sharedError ? (
+          <div className="text-destructive">{sharedError}</div>
+        ) : combinedPosts.length === 0 ? (
           <div className="text-muted-foreground">No posts yet.</div>
         ) : (
           <div className="space-y-0">
-            {userPosts.map((post) => (
+            {combinedPosts.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
