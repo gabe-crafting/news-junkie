@@ -16,7 +16,6 @@ export type Post = {
   tags: string[]
   created_at: string
   author: PostAuthor | null
-  is_shared_by_me: boolean
 }
 
 type UsePostsResult = {
@@ -47,7 +46,6 @@ type FetchPostsArgs = {
   limit: number
   userId: string | null
   userIds: string[] | null
-  sharedByUserId: string | null
   searchText: string
   searchTags: string[]
   tagMode: 'union' | 'intersection'
@@ -57,14 +55,16 @@ async function fetchPostsFiltered({
   limit,
   userId,
   userIds,
-  sharedByUserId,
   searchText,
   searchTags,
   tagMode,
 }: FetchPostsArgs): Promise<Post[]> {
   if (!userId && userIds && userIds.length === 0) return []
 
-  const selectBase = `
+  let query = supabase
+    .from('posts')
+    .select(
+      `
         id,
         user_id,
         description,
@@ -78,19 +78,9 @@ async function fetchPostsFiltered({
           profile_picture_url
         )
       `
-  const select = sharedByUserId ? `${selectBase}, post_shares!inner(user_id)` : selectBase
-
-  let query = supabase
-    .from('posts')
-    .select(select)
+    )
     .order('created_at', { ascending: false })
     .limit(limit)
-
-  if (sharedByUserId) {
-    query = query.eq('post_shares.user_id', sharedByUserId)
-    // Sharing your own posts is not supported; exclude self-authored posts from "shared" feed
-    query = query.neq('user_id', sharedByUserId)
-  }
 
   if (userId) {
     query = query.eq('user_id', userId)
@@ -123,37 +113,17 @@ async function fetchPostsFiltered({
     tags: row.tags ?? [],
     created_at: row.created_at,
     author: normalizeAuthor(row.user_profiles),
-    is_shared_by_me: false,
   }))
-}
-
-type PostShareRow = {
-  post_id: string
-}
-
-async function fetchSharedPostIds(viewerUserId: string, postIds: string[]): Promise<Set<string>> {
-  if (postIds.length === 0) return new Set()
-  const { data, error } = await supabase
-    .from('post_shares')
-    .select('post_id')
-    .eq('user_id', viewerUserId)
-    .in('post_id', postIds)
-
-  if (error) throw error
-  const rows = (data ?? []) as PostShareRow[]
-  return new Set(rows.map((r) => r.post_id))
 }
 
 export function usePosts(options?: {
   limit?: number
   userId?: string | null
   userIds?: string[] | null
-  sharedByUserId?: string | null
   refreshKey?: number
   searchText?: string
   searchTags?: string[]
   tagMode?: 'union' | 'intersection'
-  viewerUserId?: string | null
 }): UsePostsResult {
   const limit = options?.limit ?? 50
   const userId = options?.userId ?? null
@@ -162,7 +132,6 @@ export function usePosts(options?: {
     if (!ids) return null
     return Array.from(new Set(ids.filter(Boolean)))
   }, [options?.userIds])
-  const sharedByUserId = options?.sharedByUserId ?? null
   const refreshKey = options?.refreshKey
   const searchText = options?.searchText?.trim() ?? ''
   const searchTags = useMemo(
@@ -171,7 +140,6 @@ export function usePosts(options?: {
   )
   const searchTagsKey = useMemo(() => searchTags.join('|'), [searchTags])
   const tagMode = options?.tagMode ?? 'union'
-  const viewerUserId = options?.viewerUserId ?? null
 
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -180,14 +148,8 @@ export function usePosts(options?: {
   const run = async () => {
     setLoading(true)
     setError(null)
-    const p = await fetchPostsFiltered({ limit, userId, userIds, sharedByUserId, searchText, searchTags, tagMode })
-    const ids = p.map((x) => x.id)
-    if (viewerUserId) {
-      const shared = await fetchSharedPostIds(viewerUserId, ids)
-      setPosts(p.map((post) => ({ ...post, is_shared_by_me: shared.has(post.id) })))
-    } else {
-      setPosts(p)
-    }
+    const p = await fetchPostsFiltered({ limit, userId, userIds, searchText, searchTags, tagMode })
+    setPosts(p)
     setLoading(false)
   }
 
@@ -196,17 +158,9 @@ export function usePosts(options?: {
 
     async function safeRun() {
       try {
-        const p = await fetchPostsFiltered({ limit, userId, userIds, sharedByUserId, searchText, searchTags, tagMode })
-        const ids = p.map((x) => x.id)
-        if (viewerUserId) {
-          const shared = await fetchSharedPostIds(viewerUserId, ids)
-          const withShared = p.map((post) => ({ ...post, is_shared_by_me: shared.has(post.id) }))
-          if (cancelled) return
-          setPosts(withShared)
-        } else {
+        const p = await fetchPostsFiltered({ limit, userId, userIds, searchText, searchTags, tagMode })
         if (cancelled) return
         setPosts(p)
-        }
       } catch (e: unknown) {
         if (cancelled) return
         setError(e instanceof Error ? e.message : 'Failed to load posts')
@@ -222,7 +176,7 @@ export function usePosts(options?: {
     return () => {
       cancelled = true
     }
-  }, [limit, userId, userIds, sharedByUserId, refreshKey, searchText, searchTags, searchTagsKey, tagMode, viewerUserId])
+  }, [limit, userId, userIds, refreshKey, searchText, searchTags, searchTagsKey, tagMode])
 
   const refetch = async () => {
     try {

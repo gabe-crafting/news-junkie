@@ -3,13 +3,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Copy, ExternalLink, Pencil, Share2, Trash2 } from 'lucide-react'
+import { Copy, ExternalLink, Pencil, Trash2 } from 'lucide-react'
 import type { Post } from '@/hooks/usePosts'
 import { useAuth } from '@/hooks/useAuth'
 import { PostEditDialog } from '@/components/PostEditDialog'
 import { PostDeleteDialog } from '@/components/PostDeleteDialog'
 import { PostOpenLinkDialog } from '@/components/PostOpenLinkDialog'
-import { usePostShare } from '@/hooks/usePostShare'
 
 type PostCardProps = {
   post: Post
@@ -30,7 +29,6 @@ export function PostCard({ post }: PostCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [openLinkOpen, setOpenLinkOpen] = useState(false)
-  const { shared, loading: sharing, toggle: toggleShare } = usePostShare(post.id, post.is_shared_by_me)
 
   const handleCopyNewsLink = async () => {
     try {
@@ -80,21 +78,6 @@ export function PostCard({ post }: PostCardProps) {
       </CardContent>
 
       <CardFooter className="flex items-center gap-0">
-        {!isOwnPost ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className={shared ? 'size-6 text-emerald-600' : 'size-6'}
-            onClick={() => void toggleShare()}
-            aria-label="Share post"
-            title="Share post"
-            disabled={!user || sharing}
-          >
-            <Share2 className="size-3" />
-          </Button>
-        ) : null}
-
         <Button
           type="button"
           variant="ghost"
