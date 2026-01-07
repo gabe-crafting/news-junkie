@@ -25,6 +25,13 @@ Or manually:
 supabase migration up
 ```
 
+## Edge Functions (Archive link)
+
+This repo includes a Supabase Edge Function at `supabase/functions/archive-link` used to create Wayback (Archive.org) links reliably.
+
+- **It uses Deno because Supabase Edge Functions run on Deno**.
+- You **do not** need to install Deno separately for production usage; Supabase runs it.
+
 ## Migration Files
 
 ### 001_create_user_profiles.sql

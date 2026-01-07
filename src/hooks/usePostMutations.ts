@@ -6,9 +6,15 @@ export type CreatePostInput = {
   description: string
   newsLink: string
   tags: string[]
+  shouldArchive?: boolean
 }
 
-export type UpdatePostInput = CreatePostInput
+export type UpdatePostInput = {
+  description: string
+  newsLink: string
+  tags: string[]
+  shouldArchive?: boolean
+}
 
 export function isValidTag(tag: string): boolean {
   // one "word", lowercase, no special characters
@@ -80,10 +86,14 @@ export function useCreatePost(): MutationResult & {
     }
 
     try {
+      const { createArchiveLink } = await import('@/lib/archive')
+      const archiveLink = input.shouldArchive ? await createArchiveLink(normalized.newsLink) : null
+
       const { error: insertErr } = await supabase.from('posts').insert({
         user_id: user.id,
         description: normalized.description,
         news_link: normalized.newsLink,
+        archive_link: archiveLink,
         tags: normalized.tags,
       })
 
@@ -121,13 +131,24 @@ export function useUpdatePost(): MutationResult & {
     }
 
     try {
+      const { createArchiveLink } = await import('@/lib/archive')
+      const archiveLink = input.shouldArchive ? await createArchiveLink(normalized.newsLink) : null
+
+      const updateData: {
+        description: string
+        news_link: string
+        tags: string[]
+        archive_link?: string
+      } = {
+        description: normalized.description,
+        news_link: normalized.newsLink,
+        tags: normalized.tags,
+      }
+      if (archiveLink) updateData.archive_link = archiveLink
+
       const { error: updateErr } = await supabase
         .from('posts')
-        .update({
-          description: normalized.description,
-          news_link: normalized.newsLink,
-          tags: normalized.tags,
-        })
+        .update(updateData)
         .eq('id', postId)
         .eq('user_id', user.id)
 

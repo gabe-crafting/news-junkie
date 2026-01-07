@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
@@ -26,9 +27,11 @@ export function PostEditDialog({ post, open, onOpenChange }: PostEditDialogProps
 
   const [editDescription, setEditDescription] = useState(post.description)
   const [editNewsLink, setEditNewsLink] = useState(post.news_link)
+  const [shouldArchive, setShouldArchive] = useState(false)
   const [editTagInput, setEditTagInput] = useState('')
   const [editTags, setEditTags] = useState<string[]>(post.tags)
   const [tagError, setTagError] = useState<string | null>(null)
+  const hasArchiveLink = !!post.archive_link?.trim()
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
@@ -36,6 +39,7 @@ export function PostEditDialog({ post, open, onOpenChange }: PostEditDialogProps
       setTagError(null)
       setEditDescription(post.description)
       setEditNewsLink(post.news_link)
+      setShouldArchive(false)
       setEditTags(post.tags)
       setEditTagInput('')
     }
@@ -71,6 +75,7 @@ export function PostEditDialog({ post, open, onOpenChange }: PostEditDialogProps
       description: editDescription,
       newsLink: editNewsLink,
       tags: editTags,
+      shouldArchive: !hasArchiveLink ? shouldArchive : undefined,
     })
     if (ok) onOpenChange(false)
   }
@@ -106,6 +111,23 @@ export function PostEditDialog({ post, open, onOpenChange }: PostEditDialogProps
               onChange={(e) => setEditNewsLink(e.target.value)}
               disabled={saving}
             />
+
+            {!hasArchiveLink ? (
+              <div className="flex items-center justify-between gap-3 rounded-md border p-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">Archive link</div>
+                  <div className="text-xs text-muted-foreground">
+                    Save this page to the Internet Archive and attach the Wayback link.
+                  </div>
+                </div>
+                <Switch
+                  checked={shouldArchive}
+                  onCheckedChange={setShouldArchive}
+                  disabled={saving || !editNewsLink.trim()}
+                  aria-label="Archive this link"
+                />
+              </div>
+            ) : null}
           </div>
 
           <div className="space-y-2">

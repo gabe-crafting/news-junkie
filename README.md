@@ -28,3 +28,21 @@ bun run dev
 ```bash
 bun run build
 ```
+
+## Archiving links (Wayback / Archive.org)
+
+When creating a post you can optionally save the article to the Internet Archive (Wayback Machine) and store the resulting URL in `posts.archive_link`.
+
+### Why there’s “Deno” code in this repo
+
+The archiving request is implemented as a **Supabase Edge Function** (`supabase/functions/archive-link`). Supabase Edge Functions run on **Deno in Supabase’s runtime**—you do **not** need to install Deno on your machine to use them in production.
+
+### Deploy the Edge Function
+
+If you use the Supabase CLI, deploy the function:
+
+```bash
+supabase functions deploy archive-link
+```
+
+Then, if your project requires it, enable function invocation for your app (Supabase Dashboard → Edge Functions).

@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Copy, ExternalLink, Pencil, Trash2 } from 'lucide-react'
+import { Copy, ExternalLink, History, Pencil, Trash2 } from 'lucide-react'
 import type { Post } from '@/hooks/usePosts'
 import { useAuth } from '@/hooks/useAuth'
 import { PostEditDialog } from '@/components/PostEditDialog'
@@ -131,6 +131,20 @@ export function PostCard({ post }: PostCardProps) {
         >
           <ExternalLink className="size-3" />
         </Button>
+
+        {post.archive_link ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="size-6"
+            aria-label="Open archive link"
+            title="Open archive link"
+            onClick={() => setOpenLinkOpen(true)}
+          >
+            <History className="size-3" />
+          </Button>
+        ) : null}
       </CardFooter>
 
       {isOwnPost ? <PostEditDialog post={post} open={editOpen} onOpenChange={setEditOpen} /> : null}

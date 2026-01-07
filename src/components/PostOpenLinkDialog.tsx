@@ -17,6 +17,8 @@ type PostOpenLinkDialogProps = {
 }
 
 export function PostOpenLinkDialog({ post, open, onOpenChange }: PostOpenLinkDialogProps) {
+  const hasArchiveLink = !!post.archive_link?.trim()
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -37,10 +39,31 @@ export function PostOpenLinkDialog({ post, open, onOpenChange }: PostOpenLinkDia
           />
         </div>
 
+        {hasArchiveLink ? (
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor={`post-archive-link-${post.id}`}>
+              Archive link
+            </label>
+            <Textarea
+              id={`post-archive-link-${post.id}`}
+              value={post.archive_link ?? ''}
+              readOnly
+              className="min-h-[80px]"
+            />
+          </div>
+        ) : null}
+
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
+          {hasArchiveLink ? (
+            <Button asChild variant="secondary">
+              <a href={post.archive_link ?? ''} target="_blank" rel="noreferrer">
+                Open archive
+              </a>
+            </Button>
+          ) : null}
           <Button asChild>
             <a href={post.news_link} target="_blank" rel="noreferrer">
               Open

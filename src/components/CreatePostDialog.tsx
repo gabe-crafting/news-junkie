@@ -5,6 +5,7 @@ import { useCreatePost, isValidTag } from '@/hooks/usePostMutations'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
@@ -26,6 +27,7 @@ export function CreatePostDialog({ triggerClassName }: CreatePostDialogProps) {
   const [open, setOpen] = useState(false)
   const [description, setDescription] = useState('')
   const [newsLink, setNewsLink] = useState('')
+  const [shouldArchive, setShouldArchive] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagError, setTagError] = useState<string | null>(null)
@@ -62,11 +64,12 @@ export function CreatePostDialog({ triggerClassName }: CreatePostDialogProps) {
   const handleSubmit = async () => {
     if (!user) return
     setTagError(null)
-    const ok = await createPost({ description, newsLink, tags })
+    const ok = await createPost({ description, newsLink, tags, shouldArchive })
     if (ok) {
       setOpen(false)
       setDescription('')
       setNewsLink('')
+      setShouldArchive(false)
       setTags([])
       setTagInput('')
     }
@@ -122,6 +125,20 @@ export function CreatePostDialog({ triggerClassName }: CreatePostDialogProps) {
               placeholder="https://example.com/article"
               disabled={submitting}
             />
+            <div className="flex items-center justify-between gap-3 rounded-md border p-3">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">Archive link</div>
+                <div className="text-xs text-muted-foreground">
+                  Save this page to the Internet Archive and attach the Wayback link.
+                </div>
+              </div>
+              <Switch
+                checked={shouldArchive}
+                onCheckedChange={setShouldArchive}
+                disabled={submitting || !newsLink.trim()}
+                aria-label="Archive this link"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
