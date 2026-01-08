@@ -2,10 +2,6 @@
 
 ## Features
 
-- **Archive article option**
-  - Add an “Archive” action on posts (store `archive_link` and/or integrate an archiver service).
-  - Update UI to show archive status + open archive link when available.
-
 - **Lazy/dynamic loading on scrolling**
   - Implement infinite scroll / pagination for posts feed(s).
   - Preserve scroll position and avoid jank when appending new pages.
