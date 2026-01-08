@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Search, X } from 'lucide-react'
+import { Check, ChevronDown, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { usePosts } from '@/hooks/usePosts'
 import { PostCard } from '@/components/PostCard'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
@@ -11,10 +10,13 @@ import { isValidTag } from '@/hooks/usePostMutations'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Switch } from '@/components/ui/switch'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { useUsuallyViewedTags } from '@/hooks/useUsuallyViewedTags'
 
 export function HomePage() {
-  const { user, postsRefreshKey, bumpProfileRefreshKey } = useAuth()
+  const { user, postsRefreshKey, bumpProfileRefreshKey, profileRefreshKey } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { tags: usuallyViewedTags } = useUsuallyViewedTags(user?.id, profileRefreshKey)
 
   const appliedText = searchParams.get('q') ?? ''
   const appliedTagMode =
@@ -42,6 +44,8 @@ export function HomePage() {
   const [draftTags, setDraftTags] = useState<string[]>([])
   const [draftError, setDraftError] = useState<string | null>(null)
   const [draftTagMode, setDraftTagMode] = useState<'union' | 'intersection'>('union')
+  const [deletingTags, setDeletingTags] = useState(false)
+  const [deleteTagsError, setDeleteTagsError] = useState<string | null>(null)
 
   const addDraftTag = (raw: string) => {
     const next = raw.trim().toLowerCase()
@@ -53,10 +57,14 @@ export function HomePage() {
     setDraftTags((prev) => (prev.includes(next) ? prev : [...prev, next]))
     setDraftTagInput('')
     setDraftError(null)
-  }
 
-  const removeDraftTag = (tag: string) => {
-    setDraftTags((prev) => prev.filter((t) => t !== tag))
+    // Add (or confirm) this tag in "usually viewed", so it shows up under the input next time.
+    if (user) {
+      void (async () => {
+        await supabase.rpc('add_usually_viewed_tag', { p_user_id: user.id, p_tag: next })
+        bumpProfileRefreshKey()
+      })()
+    }
   }
 
   const onDraftTagKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
@@ -83,16 +91,6 @@ export function HomePage() {
 
     setSearchParams(params)
     setSearchOpen(false)
-
-    // Track tags as "usually viewed"
-    if (user && nextTags.length > 0) {
-      await Promise.all(
-        nextTags.map((tag) =>
-          supabase.rpc('add_usually_viewed_tag', { p_user_id: user.id, p_tag: tag })
-        )
-      )
-      bumpProfileRefreshKey()
-    }
   }
 
   const clearSearch = () => {
@@ -106,6 +104,32 @@ export function HomePage() {
     params.delete('tags')
     params.delete('tagMode')
     setSearchParams(params)
+  }
+
+  const availableTags = useMemo(() => {
+    const merged = [...usuallyViewedTags, ...draftTags]
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+    return Array.from(new Set(merged))
+  }, [draftTags, usuallyViewedTags])
+
+  const handleDeleteUsuallyViewedTags = async () => {
+    if (!user || deletingTags) return
+    setDeletingTags(true)
+    setDeleteTagsError(null)
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ usually_viewed_tags: [] })
+        .eq('id', user.id)
+
+      if (error) throw error
+      bumpProfileRefreshKey()
+    } catch (e: unknown) {
+      setDeleteTagsError(e instanceof Error ? e.message : 'Failed to delete tags')
+    } finally {
+      setDeletingTags(false)
+    }
   }
 
   return (
@@ -165,22 +189,36 @@ export function HomePage() {
                 onKeyDown={onDraftTagKeyDown}
               />
 
-              {draftTags.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {draftTags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="gap-1">
-                      {tag}
-                      <button
-                        type="button"
-                        className="ml-1 inline-flex items-center justify-center"
-                        onClick={() => removeDraftTag(tag)}
-                        aria-label={`Remove tag ${tag}`}
+              {deleteTagsError ? <div className="text-sm text-destructive">{deleteTagsError}</div> : null}
+
+              {availableTags.length > 0 ? (
+                <ToggleGroup
+                  type="multiple"
+                  value={draftTags}
+                  onValueChange={(next) => {
+                    const normalized = next.map((t) => t.trim().toLowerCase()).filter(Boolean)
+                    setDraftError(null)
+                    setDraftTags(normalized)
+                  }}
+                  variant="outline"
+                  size="sm"
+                  spacing={8}
+                  className="flex w-full flex-wrap justify-start gap-2"
+                >
+                  {availableTags.map((tag) => {
+                    const isSelected = draftTags.includes(tag)
+                    return (
+                      <ToggleGroupItem
+                        key={tag}
+                        value={tag}
+                        className="rounded-full border border-input bg-transparent px-3 shadow-none hover:bg-transparent hover:text-foreground data-[state=on]:bg-transparent data-[state=on]:text-foreground"
                       >
-                        <X className="size-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
+                        {isSelected ? <Check className="size-4" /> : null}
+                        {tag}
+                      </ToggleGroupItem>
+                    )
+                  })}
+                </ToggleGroup>
               ) : null}
             </div>
 
@@ -198,12 +236,21 @@ export function HomePage() {
               </div>
 
               <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={clearSearch}>
-                Clear
-              </Button>
-              <Button type="button" onClick={() => void applySearch()}>
-                Search
-              </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void handleDeleteUsuallyViewedTags()}
+                  disabled={!user || deletingTags}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete tags
+                </Button>
+                <Button type="button" variant="outline" onClick={clearSearch}>
+                  Clear
+                </Button>
+                <Button type="button" onClick={() => void applySearch()}>
+                  Search
+                </Button>
               </div>
             </div>
           </div>
