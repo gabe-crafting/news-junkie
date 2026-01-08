@@ -19,9 +19,10 @@ import {
 
 type CreatePostDialogProps = {
   triggerClassName?: string
+  triggerVariant?: 'default' | 'fab'
 }
 
-export function CreatePostDialog({ triggerClassName }: CreatePostDialogProps) {
+export function CreatePostDialog({ triggerClassName, triggerVariant = 'default' }: CreatePostDialogProps) {
   const { user } = useAuth()
   const { createPost, loading: submitting, error, resetError } = useCreatePost()
   const [open, setOpen] = useState(false)
@@ -89,10 +90,22 @@ export function CreatePostDialog({ triggerClassName }: CreatePostDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button className={triggerClassName} disabled={!user}>
-          <Plus className="h-4 w-4" />
-          Create Post
-        </Button>
+        {triggerVariant === 'fab' ? (
+          <Button
+            className={triggerClassName}
+            disabled={!user}
+            size="icon"
+            aria-label="Create post"
+            title="Create post"
+          >
+            <Plus className="size-6" />
+          </Button>
+        ) : (
+          <Button className={triggerClassName} disabled={!user}>
+            <Plus className="h-4 w-4" />
+            Create Post
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

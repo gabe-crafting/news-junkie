@@ -6,12 +6,18 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 
-export function AppNavigation() {
+interface AppNavigationProps {
+  onNavigate?: () => void
+  showBrand?: boolean
+}
+
+export function AppNavigation({ onNavigate, showBrand = true }: AppNavigationProps) {
   const { user, signOut, profileRefreshKey } = useAuth()
   const { profile } = useProfile(user?.id, profileRefreshKey)
 
   const handleSignOut = async () => {
     await signOut()
+    onNavigate?.()
   }
 
   const displayName =
@@ -24,33 +30,35 @@ export function AppNavigation() {
 
   return (
     <div className="h-full flex flex-col gap-6">
-      <Link to="/app/home" className="flex items-center gap-3">
-        <img src="/news_junkie1.png" alt="News Junkie" className="h-full w-auto" />
-      </Link>
+      {showBrand ? (
+        <Link to="/app/home" className="flex items-center gap-3">
+          <img src="/news_junkie1.png" alt="News Junkie" className="h-full w-auto" />
+        </Link>
+      ) : null}
 
       <Card className="border-0 shadow-none">
         <CardContent className="p-2">
           <nav className="flex flex-col gap-1">
             <Button asChild variant="ghost" className="justify-start gap-2">
-              <NavLink to="/app/home">
+              <NavLink to="/app/home" onClick={onNavigate}>
                 <Home className="h-4 w-4" />
                 Home
               </NavLink>
             </Button>
             <Button asChild variant="ghost" className="justify-start gap-2">
-              <NavLink to={profileHref}>
+              <NavLink to={profileHref} onClick={onNavigate}>
                 <User className="h-4 w-4" />
                 Profile
               </NavLink>
             </Button>
             <Button asChild variant="ghost" className="justify-start gap-2">
-              <NavLink to="/app/following">
+              <NavLink to="/app/following" onClick={onNavigate}>
                 <Users className="h-4 w-4" />
                 Following
               </NavLink>
             </Button>
             <Button asChild variant="ghost" className="justify-start gap-2">
-              <NavLink to="/app/discover">
+              <NavLink to="/app/discover" onClick={onNavigate}>
                 <Compass className="h-4 w-4" />
                 Discover Junkies
               </NavLink>

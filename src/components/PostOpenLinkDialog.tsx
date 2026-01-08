@@ -58,7 +58,7 @@ export function PostOpenLinkDialog({ post, open, onOpenChange }: PostOpenLinkDia
             Cancel
           </Button>
           {hasArchiveLink ? (
-            <Button asChild variant="secondary">
+            <Button asChild>
               <a href={post.archive_link ?? ''} target="_blank" rel="noreferrer">
                 Open archive
               </a>
