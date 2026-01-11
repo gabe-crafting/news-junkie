@@ -1,4 +1,4 @@
-import { CreatePostDialog } from '@/components/CreatePostDialog'
+import { CreatePostDialog } from '@/components/organisms/CreatePostDialog'
 
 export function AppRightRail() {
   return (

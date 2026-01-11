@@ -10,7 +10,7 @@ import { Camera, Copy, Pencil } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
 import { Textarea } from '@/components/ui/textarea'
-import { PostSearchCollapsible, type TagMode } from '@/components/PostSearchCollapsible'
+import { PostSearchCollapsible, type TagMode } from '@/components/organisms/PostSearchCollapsible'
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { PostCard } from '@/components/PostCard'
+import { PostCard } from '@/components/organisms/PostCard'
 
 function formatShortId(id: string | null | undefined): string {
   if (!id) return ''

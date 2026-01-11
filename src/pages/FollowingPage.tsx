@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useFollowingUserIds } from '@/hooks/useFollowingUserIds'
 import { usePosts } from '@/hooks/usePosts'
-import { PostCard } from '@/components/PostCard'
-import { PostSearchCollapsible, type TagMode } from '@/components/PostSearchCollapsible'
+import { PostCard } from '@/components/organisms/PostCard'
+import { PostSearchCollapsible, type TagMode } from '@/components/organisms/PostSearchCollapsible'
 import { supabase } from '@/lib/supabase'
 
 export function FollowingPage() {

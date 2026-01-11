@@ -41,12 +41,22 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  ariaLabel,
+  children,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    /** Accessibility label. Set to false for buttons with text content, or provide a meaningful label for icon-only buttons */
+    ariaLabel?: string | false
   }) {
   const Comp = asChild ? Slot : "button"
+  
+  // Handle ariaLabel prop for Storybook 11 compatibility
+  // Only set aria-label if explicitly provided as a string (not false)
+  // If ariaLabel is false, button has accessible text content
+  // If ariaLabel is a string, use it for icon-only buttons
+  const ariaLabelProps = typeof ariaLabel === 'string' ? { 'aria-label': ariaLabel } : {}
 
   return (
     <Comp
@@ -54,9 +64,12 @@ function Button({
       data-variant={variant}
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
+      {...ariaLabelProps}
       {...props}
-    />
+    >
+      {children}
+    </Comp>
   )
 }
 
-export { Button, buttonVariants }
+export { Button }

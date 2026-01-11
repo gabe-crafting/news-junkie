@@ -17,7 +17,6 @@ export function AppNavigation({ onNavigate, showBrand = true }: AppNavigationPro
 
   const handleSignOut = async () => {
     await signOut()
-    onNavigate?.()
   }
 
   const displayName =
@@ -95,3 +94,4 @@ export function AppNavigation({ onNavigate, showBrand = true }: AppNavigationPro
     </div>
   )
 }
+

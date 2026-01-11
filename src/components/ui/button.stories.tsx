@@ -16,13 +16,13 @@ type Story = StoryObj<typeof meta>
 export const Variants: Story = {
   render: () => (
     <div className="flex flex-wrap items-center gap-3">
-      <Button>Default</Button>
-      <Button variant="secondary">Secondary</Button>
-      <Button variant="outline">Outline</Button>
-      <Button variant="ghost">Ghost</Button>
-      <Button variant="link">Link</Button>
-      <Button variant="destructive">Destructive</Button>
-      <Button disabled>Disabled</Button>
+      <Button ariaLabel={false}>Default</Button>
+      <Button variant="secondary" ariaLabel={false}>Secondary</Button>
+      <Button variant="outline" ariaLabel={false}>Outline</Button>
+      <Button variant="ghost" ariaLabel={false}>Ghost</Button>
+      <Button variant="link" ariaLabel={false}>Link</Button>
+      <Button variant="destructive" ariaLabel={false}>Destructive</Button>
+      <Button disabled ariaLabel={false}>Disabled</Button>
     </div>
   ),
 }
@@ -30,9 +30,9 @@ export const Variants: Story = {
 export const Sizes: Story = {
   render: () => (
     <div className="flex flex-wrap items-center gap-3">
-      <Button size="sm">Small</Button>
-      <Button size="default">Default</Button>
-      <Button size="lg">Large</Button>
+      <Button size="sm" ariaLabel={false}>Small</Button>
+      <Button size="default" ariaLabel={false}>Default</Button>
+      <Button size="lg" ariaLabel={false}>Large</Button>
     </div>
   ),
 }

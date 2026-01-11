@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from 'react'
 import { AppNavigation } from './AppNavigation'
 import { AppRightRail } from './AppRightRail'
-import { CreatePostDialog } from '@/components/CreatePostDialog'
+import { CreatePostDialog } from './CreatePostDialog'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Menu } from 'lucide-react'
@@ -73,3 +73,4 @@ export function AppLayout({ children }: AppLayoutProps) {
     </div>
   )
 }
+
