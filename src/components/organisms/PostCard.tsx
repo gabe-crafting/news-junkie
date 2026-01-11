@@ -6,9 +6,9 @@ import { Badge } from '@/components/ui/badge'
 import { Copy, ExternalLink, Pencil, Trash2 } from 'lucide-react'
 import type { Post } from '@/hooks/usePosts'
 import { useAuth } from '@/hooks/useAuth'
-import { PostEditDialog } from './PostEditDialog'
-import { PostDeleteDialog } from './PostDeleteDialog'
-import { PostOpenLinkDialog } from './PostOpenLinkDialog'
+import { PostEditDialog } from '@/components/organisms/PostEditDialog'
+import { PostDeleteDialog } from '@/components/organisms/PostDeleteDialog'
+import { PostOpenLinkDialog } from '@/components/organisms/PostOpenLinkDialog'
 
 type PostCardProps = {
   post: Post
