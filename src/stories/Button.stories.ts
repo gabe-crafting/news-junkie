@@ -30,14 +30,12 @@ export const Primary: Story = {
   args: {
     primary: true,
     label: 'Button',
-    ariaLabel: false,
   },
 };
 
 export const Secondary: Story = {
   args: {
     label: 'Button',
-    ariaLabel: false,
   },
 };
 
@@ -45,7 +43,6 @@ export const Large: Story = {
   args: {
     size: 'large',
     label: 'Button',
-    ariaLabel: false,
   },
 };
 
@@ -53,6 +50,5 @@ export const Small: Story = {
   args: {
     size: 'small',
     label: 'Button',
-    ariaLabel: false,
   },
 };

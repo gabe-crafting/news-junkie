@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, Search, X } from 'lucide-react'
+import { ChevronDown, Plus, Search, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -118,16 +118,29 @@ export function PostSearchCollapsible({
             <label className="text-sm font-medium" htmlFor="post-search-tag">
               Tag
             </label>
-            <Input
-              id="post-search-tag"
-              placeholder="type a tag and press Enter"
-              value={draftTagInput}
-              onChange={(e) => {
-                setDraftError(null)
-                setDraftTagInput(e.target.value)
-              }}
-              onKeyDown={onDraftTagKeyDown}
-            />
+            <div className="flex">
+              <Input
+                id="post-search-tag"
+                placeholder="type a tag and press Enter"
+                value={draftTagInput}
+                onChange={(e) => {
+                  setDraftError(null)
+                  setDraftTagInput(e.target.value)
+                }}
+                onKeyDown={onDraftTagKeyDown}
+                className="rounded-r-none"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-l-none border-l-0"
+                ariaLabel="Add tag"
+                onClick={() => addDraftTag(draftTagInput)}
+              >
+                <Plus className="size-4" />
+              </Button>
+            </div>
 
             {draftTags.length > 0 ? (
               <div className="flex flex-wrap gap-2">

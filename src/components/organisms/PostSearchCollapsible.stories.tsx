@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { userEvent, within } from '@storybook/test'
 
 import { PostSearchCollapsible, type TagMode } from './PostSearchCollapsible'
+import { expect, userEvent, within } from 'storybook/test'
 
 type PostSearchState = {
   text: string
@@ -90,13 +90,25 @@ export const AddMockTextAndTags: Story = {
     await userEvent.type(canvas.getByLabelText('Text'), 'Mock text')
 
     const tagInput = canvas.getByLabelText('Tag')
-    for (const tag of ['politics', 'tech', 'science', 'media', 'economy']) {
+    const tags = ['politics', 'tech', 'science', 'media', 'economy'] as const
+    for (const [idx, tag] of tags.entries()) {
       await userEvent.clear(tagInput)
       await userEvent.type(tagInput, tag)
-      await userEvent.keyboard('{Enter}')
+      if (idx < 2) {
+        await userEvent.keyboard('{Enter}')
+      } else {
+        await userEvent.click(canvas.getByRole('button', { name: /add tag/i }))
+      }
     }
 
     await userEvent.click(canvas.getByRole('button', { name: /^search$/i }))
+
+    const currentValuePre = canvas.getByText(/current value:/i).parentElement?.querySelector('pre')
+    await expect(currentValuePre).toBeTruthy()
+    await expect(currentValuePre).toHaveTextContent(/"text":\s*"Mock text"/)
+    for (const tag of tags) {
+      await expect(currentValuePre).toHaveTextContent(new RegExp(`"${tag}"`))
+    }
   },
 }
 
@@ -116,6 +128,42 @@ export const AddShortText: Story = {
     await userEvent.type(canvas.getByLabelText('Text'), 'four or five words')
 
     await userEvent.click(canvas.getByRole('button', { name: /^search$/i }))
+
+    const currentValuePre = canvas.getByText(/current value:/i).parentElement?.querySelector('pre')
+    await expect(currentValuePre).toBeTruthy()
+    await expect(currentValuePre).toHaveTextContent(/"text":\s*"four or five words"/)
+    await expect(currentValuePre).toHaveTextContent(/"tags":\s*\[\s*\]/)
+  },
+}
+
+export const TagInputValidation: Story = {
+  args: {
+    ...requiredArgs,
+  },
+  parameters: {
+    interactions: { autoplay: true },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+
+    await userEvent.click(canvas.getByRole('button', { name: /search posts/i }))
+
+    const tagInput = canvas.getByLabelText('Tag')
+
+    // Valid tag should be added as a badge (via + button).
+    await userEvent.clear(tagInput)
+    await userEvent.type(tagInput, 'validtag')
+    await userEvent.click(canvas.getByRole('button', { name: /add tag/i }))
+    await expect(canvas.getByRole('button', { name: /remove tag validtag/i })).toBeInTheDocument()
+
+    // Special characters should show an error and NOT add a badge.
+    await userEvent.clear(tagInput)
+    await userEvent.type(tagInput, 'bad!')
+    await userEvent.keyboard('{Enter}')
+    await expect(
+      canvas.getByText('Tags must be a single lowercase word with no special characters.'),
+    ).toBeInTheDocument()
+    await expect(canvas.queryByText('bad!')).not.toBeInTheDocument()
   },
 }
 
