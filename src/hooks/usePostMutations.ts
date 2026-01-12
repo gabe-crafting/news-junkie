@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
+import { emitPostDeleted, emitPostUpdated } from '@/lib/postEvents'
+import type { Post, PostAuthor } from '@/hooks/usePosts'
 
 export type CreatePostInput = {
   description: string
@@ -112,14 +114,31 @@ export function useCreatePost(): MutationResult & {
 }
 
 export function useUpdatePost(): MutationResult & {
-  updatePost: (postId: string, input: UpdatePostInput) => Promise<boolean>
+  updatePost: (postId: string, input: UpdatePostInput) => Promise<Post | null>
 } {
-  const { user, bumpPostsRefreshKey } = useAuth()
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const updatePost = async (postId: string, input: UpdatePostInput): Promise<boolean> => {
-    if (!user) return false
+  type PostsUpdateRow = {
+    id: string
+    user_id: string
+    description: string
+    news_link: string
+    archive_link: string | null
+    tags: string[] | null
+    created_at: string
+    user_profiles: PostAuthor | PostAuthor[] | null
+  }
+
+  function normalizeAuthor(author: PostsUpdateRow['user_profiles']): PostAuthor | null {
+    if (!author) return null
+    if (Array.isArray(author)) return author[0] ?? null
+    return author
+  }
+
+  const updatePost = async (postId: string, input: UpdatePostInput): Promise<Post | null> => {
+    if (!user) return null
     setLoading(true)
     setError(null)
 
@@ -127,7 +146,7 @@ export function useUpdatePost(): MutationResult & {
     if (validationError) {
       setError(validationError)
       setLoading(false)
-      return false
+      return null
     }
 
     try {
@@ -146,18 +165,48 @@ export function useUpdatePost(): MutationResult & {
       }
       if (archiveLink) updateData.archive_link = archiveLink
 
-      const { error: updateErr } = await supabase
+      const { data, error: updateErr } = await supabase
         .from('posts')
         .update(updateData)
         .eq('id', postId)
         .eq('user_id', user.id)
+        .select(
+          `
+            id,
+            user_id,
+            description,
+            news_link,
+            archive_link,
+            tags,
+            created_at,
+            user_profiles (
+              id,
+              name,
+              profile_picture_url
+            )
+          `
+        )
+        .single()
 
       if (updateErr) throw updateErr
-      bumpPostsRefreshKey()
-      return true
+
+      const row = data as unknown as PostsUpdateRow
+      const updated: Post = {
+        id: row.id,
+        user_id: row.user_id,
+        description: row.description,
+        news_link: row.news_link,
+        archive_link: row.archive_link,
+        tags: row.tags ?? [],
+        created_at: row.created_at,
+        author: normalizeAuthor(row.user_profiles),
+      }
+
+      emitPostUpdated(updated)
+      return updated
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to update post')
-      return false
+      return null
     } finally {
       setLoading(false)
     }
@@ -169,7 +218,7 @@ export function useUpdatePost(): MutationResult & {
 export function useDeletePost(): MutationResult & {
   deletePost: (postId: string) => Promise<boolean>
 } {
-  const { user, bumpPostsRefreshKey } = useAuth()
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -185,7 +234,7 @@ export function useDeletePost(): MutationResult & {
         .eq('user_id', user.id)
 
       if (deleteErr) throw deleteErr
-      bumpPostsRefreshKey()
+      emitPostDeleted(postId)
       return true
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to delete post')

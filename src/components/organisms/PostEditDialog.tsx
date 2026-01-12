@@ -71,13 +71,13 @@ export function PostEditDialog({ post, open, onOpenChange }: PostEditDialogProps
 
   const handleSave = async () => {
     setTagError(null)
-    const ok = await updatePost(post.id, {
+    const updated = await updatePost(post.id, {
       description: editDescription,
       newsLink: editNewsLink,
       tags: editTags,
       shouldArchive: !hasArchiveLink ? shouldArchive : undefined,
     })
-    if (ok) onOpenChange(false)
+    if (updated) onOpenChange(false)
   }
 
   return (

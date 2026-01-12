@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { onPostDeleted, onPostUpdated } from '@/lib/postEvents'
 
 export type PostAuthor = {
   id: string
@@ -144,6 +145,26 @@ export function usePosts(options?: {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const unsubs = [
+      onPostUpdated((updated) => {
+        setPosts((prev) => {
+          const idx = prev.findIndex((p) => p.id === updated.id)
+          if (idx === -1) return prev
+          const next = prev.slice()
+          next[idx] = updated
+          return next
+        })
+      }),
+      onPostDeleted((postId) => {
+        setPosts((prev) => prev.filter((p) => p.id !== postId))
+      }),
+    ]
+    return () => {
+      for (const unsub of unsubs) unsub()
+    }
+  }, [])
 
   const run = async () => {
     setLoading(true)

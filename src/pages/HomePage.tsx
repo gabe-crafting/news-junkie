@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check, ChevronDown, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { usePosts } from '@/hooks/usePosts'
+import { useInfinitePosts } from '@/hooks/useInfinitePosts'
 import { PostCard } from '@/components/organisms/PostCard'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -29,14 +29,39 @@ export function HomePage() {
       .filter(Boolean)
   }, [searchParams])
 
-  const { posts, loading, error } = usePosts({
-    limit: 50,
+  const { posts, initialLoading, loadingMore, error, hasMore, loadMore } = useInfinitePosts({
+    pageSize: 30,
     refreshKey: postsRefreshKey,
     searchText: appliedText,
     searchTags: appliedTags,
     tagMode: appliedTagMode,
   })
   const [searchOpen, setSearchOpen] = useState(false)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const el = loadMoreRef.current
+    if (!el) return
+    if (!hasMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (!first?.isIntersecting) return
+        if (initialLoading || loadingMore) return
+        void loadMore()
+      },
+      {
+        // Start loading a bit before the bottom.
+        root: null,
+        rootMargin: '400px',
+        threshold: 0,
+      }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasMore, initialLoading, loadMore, loadingMore])
 
   // Draft form state (what user is typing)
   const [draftText, setDraftText] = useState('')
@@ -257,7 +282,7 @@ export function HomePage() {
         </CollapsibleContent>
       </Collapsible>
 
-      {loading ? (
+      {initialLoading ? (
         <div className="text-muted-foreground">Loading posts...</div>
       ) : error ? (
         <div className="text-destructive">{error}</div>
@@ -268,6 +293,14 @@ export function HomePage() {
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
+
+          <div ref={loadMoreRef} className="h-1" />
+
+          {loadingMore ? (
+            <div className="py-4 text-muted-foreground">Loading more...</div>
+          ) : !hasMore ? (
+            <div className="py-4 text-muted-foreground">You’re all caught up.</div>
+          ) : null}
         </div>
       )}
     </div>
