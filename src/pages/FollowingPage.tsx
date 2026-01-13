@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useFollowingUserIds } from '@/hooks/useFollowingUserIds'
 import { usePosts } from '@/hooks/usePosts'
-import { PostCard } from '@/components/organisms/PostCard'
 import { PostSearchCollapsible, type TagMode } from '@/components/organisms/PostSearchCollapsible'
 import { supabase } from '@/lib/supabase'
+import { PostsList } from '@/components/organisms/PostsList'
 
 export function FollowingPage() {
   const { user, postsRefreshKey, bumpProfileRefreshKey } = useAuth()
@@ -52,18 +52,8 @@ export function FollowingPage() {
         <div className="text-destructive">{followingError}</div>
       ) : followingIds.length === 0 ? (
         <div className="text-muted-foreground">You aren’t following anyone yet.</div>
-      ) : loading ? (
-        <div className="text-muted-foreground">Loading posts...</div>
-      ) : error ? (
-        <div className="text-destructive">{error}</div>
-      ) : posts.length === 0 ? (
-        <div className="text-muted-foreground">No posts yet.</div>
       ) : (
-        <div className="space-y-0">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
+        <PostsList posts={posts} loading={loading} error={error} />
       )}
     </div>
   )

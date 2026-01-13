@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
-import { usePosts } from '@/hooks/usePosts'
+import { useInfinitePosts } from '@/hooks/useInfinitePosts'
 import { useFollow } from '@/hooks/useFollow'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { PostCard } from '@/components/organisms/PostCard'
+import { PostsList } from '@/components/organisms/PostsList'
 
 function formatShortId(id: string | null | undefined): string {
   if (!id) return ''
@@ -52,10 +52,13 @@ export function ProfilePage() {
 
   const {
     posts: userPosts,
-    loading: postsLoading,
+    initialLoading: postsLoading,
+    loadingMore,
     error: postsError,
-  } = usePosts({
-    limit: 50,
+    hasMore,
+    loadMore,
+  } = useInfinitePosts({
+    pageSize: 30,
     userId,
     refreshKey: postsRefreshKey,
     searchText: postSearch.text,
@@ -329,19 +332,15 @@ export function ProfilePage() {
           onClear={() => setPostSearch({ text: '', tags: [], tagMode: 'union' })}
         />
 
-        {postsLoading ? (
-          <div className="text-muted-foreground">Loading posts...</div>
-        ) : postsError ? (
-          <div className="text-destructive">{postsError}</div>
-        ) : userPosts.length === 0 ? (
-          <div className="text-muted-foreground">No posts yet.</div>
-        ) : (
-          <div className="space-y-0">
-            {userPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-        )}
+        <PostsList
+          posts={userPosts}
+          loading={postsLoading}
+          error={postsError}
+          infinite
+          hasMore={hasMore}
+          loadingMore={loadingMore}
+          loadMore={loadMore}
+        />
       </div>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

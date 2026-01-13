@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Check, ChevronDown, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useInfinitePosts } from '@/hooks/useInfinitePosts'
-import { PostCard } from '@/components/organisms/PostCard'
+import { PostsList } from '@/components/organisms/PostsList'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
@@ -37,31 +37,6 @@ export function HomePage() {
     tagMode: appliedTagMode,
   })
   const [searchOpen, setSearchOpen] = useState(false)
-  const loadMoreRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    const el = loadMoreRef.current
-    if (!el) return
-    if (!hasMore) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0]
-        if (!first?.isIntersecting) return
-        if (initialLoading || loadingMore) return
-        void loadMore()
-      },
-      {
-        // Start loading a bit before the bottom.
-        root: null,
-        rootMargin: '400px',
-        threshold: 0,
-      }
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [hasMore, initialLoading, loadMore, loadingMore])
 
   // Draft form state (what user is typing)
   const [draftText, setDraftText] = useState('')
@@ -282,27 +257,15 @@ export function HomePage() {
         </CollapsibleContent>
       </Collapsible>
 
-      {initialLoading ? (
-        <div className="text-muted-foreground">Loading posts...</div>
-      ) : error ? (
-        <div className="text-destructive">{error}</div>
-      ) : posts.length === 0 ? (
-        <div className="text-muted-foreground">No posts yet.</div>
-      ) : (
-        <div className="space-y-0">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-
-          <div ref={loadMoreRef} className="h-1" />
-
-          {loadingMore ? (
-            <div className="py-4 text-muted-foreground">Loading more...</div>
-          ) : !hasMore ? (
-            <div className="py-4 text-muted-foreground">You’re all caught up.</div>
-          ) : null}
-        </div>
-      )}
+      <PostsList
+        posts={posts}
+        loading={initialLoading}
+        error={error}
+        infinite
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        loadMore={loadMore}
+      />
     </div>
   )
 }
